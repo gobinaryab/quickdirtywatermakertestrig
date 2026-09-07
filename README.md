@@ -38,7 +38,7 @@ not for permeate, not for process validation.
 ## Rig layout
 
 ```
-feed tank ──► [LP booster or gravity head ≥0.5 bar] ──► 5 µm ──► 1 µm ──► K5 inlet
+feed tank ──► [pre-pump ~3 bar, see below] ──► V2 ──► sand filter ──► 5 µm ──► 1 µm ──► K5 inlet
                                                                              │
                                            K5 outlet (M22×1.5 → 3/8" BSP) ───┘
                                                      │
@@ -86,13 +86,81 @@ the motor on/off. Always leave a flow path back to the tank.
 | 5 | Extra needle valve (optional) | Brass or SS, 1/2" BSP, 0–100 bar | 1 | 200–400 SEK | If V5 is needed elsewhere in the DUT chain |
 | 6 | Test gauge | Glycerine-filled, 0–40 bar, 1/4" BSP + adapter | 1 | 150–300 SEK | Independent reference for PT3 / PS1 / PRV |
 | 7 | Feed tank | 60–100 L tub/bucket, outlet near bottom | 1 | 150–300 SEK | Also the bypass/drain return |
-| 8 | Feed hose + fittings | 3/4" garden hose to K5 inlet, or 12 mm PE from LP booster | — | 100–200 SEK | K5 wants ≥ ~600 L/h at 0.5–1 bar inlet; it does not self-prime well |
+| 8 | Feed hose + fittings | 12 mm PE / LF 3000 from the pre-pump section, 3/4" garden-hose adapter at the K5 inlet | — | 100–200 SEK | K5 wants ≥ ~600 L/h at 0.5–1 bar inlet; it does not self-prime well — hence the pre-pump |
 | 9 | Inlet strainer | Kärcher inlet filter or inline mesh | 1 | 50–150 SEK | Protect the K5 from debris |
 | 10 | PTFE tape / thread sealant, BSP washers | | — | 100 SEK | |
 | 11 | RCD-protected outlet | 16 A, 230 V | 1 | — | K5 is 2.1 kW on a 10 A plug; nothing else on the circuit |
 
-Budget: roughly 4 000–6 000 SEK all-in, of which the K5 itself stays useful
+Budget: roughly 4 000–6 000 SEK for the HP side plus 1 500–3 000 SEK for the
+pre-pump section below, of which the K5 and the garden pump stay useful
 afterwards.
+
+## Pre-pump (emulates the seawater feed pump)
+
+On site the feed comes from an existing seawater pump at **~3 bar** through a
+12 mm PE / LF 3000 outlet into V2 → sand filter → 5 µm → 1 µm → HP-pump
+suction, with PT1 / PT1b / PT2 (0–6 bar) reading the ΔPs. The rig needs the
+same thing from the test tank, for two reasons:
+
+1. The K5 wants ≥ ~600 L/h at 0.5–1 bar on its inlet and does not self-prime
+   from a low tank.
+2. The LP fleet only behaves realistically with ~3 bar upstream: V2 is
+   servo-assisted and needs ≥0.5 bar ΔP to open at all, the cartridge/sand
+   filter ΔP readings need real flow, and PT1/PT1b/PT2 need something to read.
+
+### Requirements
+
+| | Value | Why |
+|---|---|---|
+| Pressure | 2.5–4 bar at the working point | matches the ~3 bar site pump; K5 inlet accepts up to 12 bar |
+| Flow | 1 000–1 500 L/h at ~3 bar | design feed flow; the K5 takes ~500 L/h, the rest returns via bypass |
+| Type | self-priming jet/garden pump or flooded-suction centrifugal, **no pressure switch** | continuous running, no hydrophor cycling |
+| Power | 230 V, ≤ ~1 kW | separate socket from the K5 |
+| Ports | 1" BSP in/out typical → adapt to 12 mm PE / LF 3000 | same interface as the site pump outlet |
+| Wetted | plastic/brass/SS, tap water | rig only |
+
+A cheap 600–900 W self-priming garden pump (Biltema / Jula / Gardena class:
+~3 000–3 500 L/h open flow, ~4 bar shut-off) hits this band once it is
+running into the rig's resistance; expect roughly 1 000–2 000 SEK. Do **not**
+buy a "hydrofor"/booster variant with an integral pressure switch — it will
+cycle against the K5's total-stop.
+
+### Parts
+
+| # | Item | Spec | Qty | Approx. cost | Notes |
+|---|---|---|---|---|---|
+| 12 | Garden / jet pump | 230 V, 600–900 W, self-priming, ~3 bar @ 1 000–1 500 L/h, 1" BSP ports | 1 | 1 000–2 000 SEK | No pressure switch |
+| 13 | Suction hose + foot valve/strainer | 1" reinforced suction hose, 1–2 m, foot valve with strainer | 1 | 200–400 SEK | Keeps prime, protects the pump |
+| 14 | Outlet adapters | 1" BSP → 1/2" BSP → LF 3000 12 mm push-fit stud | 1 set | 150–300 SEK | Gives the same 12 mm PE interface as the site pump |
+| 15 | Throttle / regulating valve on the pre-pump outlet | 1/2" ball or needle, brass | 1 | 100–200 SEK | Sets the ~3 bar working point |
+| 16 | Pressure gauge 0–6 bar | 1/4" BSP, glycerine | 1 | 100–150 SEK | Reference for PT1 |
+| 17 | Return line to tank | 12 mm PE or 1/2" hose + 1/2" ball valve | 1 | 100–200 SEK | Pre-pump bypass so the pump never dead-heads when V2 closes |
+
+### Layout
+
+```
+test tank ──► foot valve/strainer ──► [pre-pump ~3 bar] ──► throttle ──► gauge/PT1 ──► V2 ──► sand filter ──► PT1b ──► 5 µm ──► 1 µm ──► PT2 ──► K5 inlet
+                                             │
+                                        pre-pump bypass (ball valve) ──► test tank
+```
+
+Same rule as the HP side: the pre-pump always has a path back to the tank.
+When V2 closes (e.g. during an alarm test) the pre-pump must not dead-head —
+leave the pre-pump bypass cracked or let a small relief line run
+continuously. A jet pump will tolerate a short dead-head but will heat up.
+
+### Extra tests this enables
+
+- [ ] V2 opens/closes at ~3 bar upstream, and **fails to open** at <0.5 bar ΔP
+      (confirm the servo-assisted limitation, then never design around zero ΔP).
+- [ ] Sand-filter ΔP (PT1 − PT1b) and cartridge ΔP (PT1b − PT2) at 1 000 L/h,
+      clean, and with a deliberately blinded cartridge.
+- [ ] Low-suction-pressure alarm at the HP pump inlet (PT2 threshold) by
+      throttling the pre-pump.
+- [ ] PT1/PT1b/PT2 vs reference gauge at 0 / 1 / 2 / 3 / 4 bar.
+- [ ] LP pressure-test gate at 5–6 bar on the PE + LF 3000 fleet (close V2
+      against the pre-pump shut-off head; a ~4 bar garden pump will need the
+      K5 or a hand test pump to reach 6 bar).
 
 ## What the rig is for
 
